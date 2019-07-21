@@ -11,8 +11,8 @@ import me.ryanhamshire.GriefPrevention.Claim;
 
 /**
  * This Event is thrown when a claim is transfered....it is modifiable and can
- * be cancelled. The CommandSender can be null in the event that the Transfer
- * is called by another plugin that either didn't or couldn't report a sender.
+ * be cancelled. The CommandSender can be null in the event that the Transfer is
+ * called by another plugin that either didn't or couldn't report a sender.
  * Created by TheMrJezza on 22/07/2019.
  */
 public class ClaimTransferEvent extends Event implements Cancellable {
@@ -71,7 +71,7 @@ public class ClaimTransferEvent extends Event implements Cancellable {
 	public UUID getNewOwner() {
 		return newOwner;
 	}
-	
+
 	public void setNewOwner(UUID uuid) {
 		newOwner = uuid;
 	}
