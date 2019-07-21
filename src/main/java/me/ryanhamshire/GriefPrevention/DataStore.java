@@ -18,26 +18,6 @@
 
 package me.ryanhamshire.GriefPrevention;
 
-import com.google.common.io.Files;
-import me.ryanhamshire.GriefPrevention.events.ClaimCreatedEvent;
-import me.ryanhamshire.GriefPrevention.events.ClaimDeletedEvent;
-import me.ryanhamshire.GriefPrevention.events.ClaimModifiedEvent;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Chunk;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.AnimalTamer;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Tameable;
-import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.ItemStack;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -58,6 +38,30 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
+
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
+import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.AnimalTamer;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Tameable;
+import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
+
+import com.google.common.io.Files;
+
+import me.ryanhamshire.GriefPrevention.events.ClaimCreatedEvent;
+import me.ryanhamshire.GriefPrevention.events.ClaimDeletedEvent;
+import me.ryanhamshire.GriefPrevention.events.ClaimModifiedEvent;
+import me.ryanhamshire.GriefPrevention.events.ClaimTransferEvent;
 
 //singleton class which manages all GriefPrevention data (except for config options)
 public abstract class DataStore 
@@ -388,13 +392,20 @@ public abstract class DataStore
 	        super(message);
 	    }
 	}
-	synchronized public void changeClaimOwner(Claim claim, UUID newOwnerID)
+	synchronized public void changeClaimOwner(Claim claim, UUID newOwnerID, CommandSender cs)
 	{
 		//if it's a subdivision, throw an exception
 		if(claim.parent != null)
 		{
 			throw new NoTransferException("Subdivisions can't be transferred.  Only top-level claims may change owners.");
 		}
+		
+		ClaimTransferEvent evt = new ClaimTransferEvent(claim, cs, newOwnerID);
+		Bukkit.getPluginManager().callEvent(evt);
+		if (evt.isCancelled()) {
+			throw new NoTransferException("Claim Transfer was cancelled.  A plugin has cancelled the ClaimTransferEvent.");
+		}
+		newOwnerID = evt.getNewOwner();
 		
 		//otherwise update information
 		

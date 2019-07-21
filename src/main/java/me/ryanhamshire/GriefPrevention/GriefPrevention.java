@@ -1427,7 +1427,7 @@ public class GriefPrevention extends JavaPlugin
 			//change ownerhsip
 			try
 			{
-				this.dataStore.changeClaimOwner(claim, newOwnerID);
+				this.dataStore.changeClaimOwner(claim, newOwnerID, sender);
 			}
 			catch(NoTransferException e)
 			{
