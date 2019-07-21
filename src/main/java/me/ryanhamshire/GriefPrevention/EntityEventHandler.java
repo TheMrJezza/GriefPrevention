@@ -124,9 +124,8 @@ public class EntityEventHandler implements Listener
 
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
 	public void onLightningStrike(LightningStrikeEvent event){
-		if(event.getCause() == LightningStrikeEvent.Cause.TRIDENT){
+		if(event.getCause() == LightningStrikeEvent.Cause.TRIDENT)
 			event.getLightning().setMetadata("GP_TRIDENT", new FixedMetadataValue(GriefPrevention.instance, event.getLightning().getLocation()));
-		}
 	}
 
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
@@ -720,8 +719,10 @@ public class EntityEventHandler implements Listener
         
         EntityDamageByEntityEvent subEvent = (EntityDamageByEntityEvent) event;
 
-        if(subEvent.getDamager() instanceof LightningStrike && subEvent.getDamager().getMetadata("GP_TRIDENT").size() >= 1){
+        if(subEvent.getDamager() instanceof LightningStrike && subEvent.getDamager().hasMetadata("GP_TRIDENT"))
+        {
 			event.setCancelled(true);
+			return;
 		}
         //determine which player is attacking, if any
         Player attacker = null;

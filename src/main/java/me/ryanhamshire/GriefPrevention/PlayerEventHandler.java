@@ -27,7 +27,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Tag;
-import org.bukkit.TravelAgent;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.block.Block;
@@ -1059,42 +1058,6 @@ class PlayerEventHandler implements Listener
 
 			//don't track in worlds where claims are not enabled
 			if(!instance.claimsEnabledForWorld(event.getTo().getWorld())) return;
-        
-            //FEATURE: if the player teleporting doesn't have permission to build a nether portal and none already exists at the destination, cancel the teleportation
-            if(instance.config_claims_portalsRequirePermission)
-            {
-                Location destination = event.getTo();
-                if(event.useTravelAgent())
-                {
-                    if(event.getPortalTravelAgent().getCanCreatePortal())
-                    {
-                        //hypothetically find where the portal would be created if it were
-                        //this is VERY expensive for the cpu, so this feature is off by default
-                        TravelAgent agent = event.getPortalTravelAgent();
-                        agent.setCanCreatePortal(false);
-                        destination = agent.findOrCreate(destination);
-                        agent.setCanCreatePortal(true);
-                    }
-                    else
-                    {
-                        //if not able to create a portal, we don't have to do anything here
-                        return;
-                    }
-                }
-            
-                //if creating a new portal
-                if(destination.getBlock().getType() != Material.NETHER_PORTAL)
-                {
-                    //check for a land claim and the player's permission that land claim
-                    Claim claim = this.dataStore.getClaimAt(destination, false, null);
-                    if(claim != null && claim.allowBuild(player, Material.NETHER_PORTAL) != null)
-                    {
-                        //cancel and inform about the reason
-                        event.setCancelled(true);
-                        instance.sendMessage(player, TextMode.Err, Messages.NoBuildPortalPermission, claim.getOwnerName());
-                    }
-                }
-            }
         }
 	}
 	
@@ -1847,7 +1810,8 @@ class PlayerEventHandler implements Listener
 			ItemStack itemInHand = instance.getItemInHand(player, hand);
 			Material materialInHand = itemInHand.getType();	
 			
-			ArrayList<Material> spawn_eggs = new ArrayList<Material>();
+			Set<Material> spawn_eggs = new HashSet<>();
+			Set<Material> dyes = new HashSet<>();
 			
 			spawn_eggs.add(Material.BAT_SPAWN_EGG);
 			spawn_eggs.add(Material.BLAZE_SPAWN_EGG);
@@ -1900,9 +1864,21 @@ class PlayerEventHandler implements Listener
 			spawn_eggs.add(Material.ZOMBIE_HORSE_SPAWN_EGG);
 			spawn_eggs.add(Material.ZOMBIE_PIGMAN_SPAWN_EGG);
 			spawn_eggs.add(Material.ZOMBIE_VILLAGER_SPAWN_EGG);
+
+			for (Material material : Material.values())
+			{
+				if (!material.isLegacy() && material.name().endsWith("_DYE"))
+					dyes.add(material);
+			}
+
 			
 			//if it's bonemeal, armor stand, spawn egg, etc - check for build permission //RoboMWM: also check flint and steel to stop TNT ignition
-			if(clickedBlock != null && (materialInHand == Material.BONE_MEAL || materialInHand == Material.ARMOR_STAND || (spawn_eggs.contains(materialInHand) && GriefPrevention.instance.config_claims_preventGlobalMonsterEggs) || materialInHand == Material.END_CRYSTAL || materialInHand == Material.FLINT_AND_STEEL))
+			if(clickedBlock != null && (materialInHand == Material.BONE_MEAL
+					|| materialInHand == Material.ARMOR_STAND
+					|| (spawn_eggs.contains(materialInHand) && GriefPrevention.instance.config_claims_preventGlobalMonsterEggs)
+					|| materialInHand == Material.END_CRYSTAL
+					|| materialInHand == Material.FLINT_AND_STEEL)
+					|| dyes.contains(materialInHand))
 			{
 				String noBuildReason = instance.allowBuild(player, clickedBlock.getLocation(), clickedBlockType);
 				if(noBuildReason != null)
