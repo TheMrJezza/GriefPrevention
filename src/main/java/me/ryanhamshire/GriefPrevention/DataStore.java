@@ -359,6 +359,11 @@ public abstract class DataStore {
 		}
 	}
 
+	// A wrapper for the sake of compatibility.
+	synchronized public void changeClaimOwner(Claim claim, UUID newOwnerID) {
+		changeClaimOwner(claim, newOwnerID, null);
+	}
+
 	synchronized public void changeClaimOwner(Claim claim, UUID newOwnerID, CommandSender cs) {
 		// if it's a subdivision, throw an exception
 		if (claim.parent != null) {
